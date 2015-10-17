@@ -296,8 +296,6 @@ function widgets_flush_caches() {
 }
 
 function widgets_clear_widgets_cache($cid, $wildcard = FALSE) {
-//dsm($cid);
-//dsm($wildcard);
   if ($cid) {
     cache_clear_all($cid, 'cache_widgets', $wildcard);
   }  
@@ -352,7 +350,6 @@ function widgets_widgets_default_styles() {
 function widgets_widgets_set_save($set) {
   if (isset($set['old_name']) && $set['old_name'] != $set['name']) {
     $instances = field_read_instances();
-dsm($instances);
     // Loop through all fields searching for widget fields.
     foreach ($instances as $instance) {
       if ($instance['widget']['module'] == 'image') {
@@ -497,7 +494,6 @@ function widgets_set_load($name = NULL, $wsid = NULL, $include = NULL) {
  *   An widget set array. In the case of a new set, 'wsid' will be populated.
  */
 function widgets_set_save($set) {
-//dsm($set);
   if (!isset($set['data'])) {
     $set['data'] = array();
   }
@@ -527,13 +523,6 @@ function widgets_set_save($set) {
 }
 
 function widgets_set_visibility_save($set) {
-  /*
-  $set['data']['visibility'] += array(
-    'block' => 1,
-    'token' => 1,
-  );
-  */
-//dsm($set);
   $mode = 'wsid';
   $query = db_merge('widgets_visibility')
     ->key(array('wsid' => $set['wsid']))
@@ -945,7 +934,6 @@ function widgets_element_load_by_admin_path() {
  *   An widget element array. In the case of a new element, 'weid' will be set.
  */
 function widgets_element_save($element) {
-//dsm($element);
   if (!isset($element['data'])) {
     $element['data'] = array();
   }
@@ -1079,9 +1067,13 @@ function _widgets_cache_scope($name, $scope = NULL, $action = 'get') {
 function theme_widgets_set_view($variables) {
   drupal_add_css(drupal_get_path('module', 'widgets') . '/widgets.css');
 
-  $set = $variables['set'];
   $is_preview = widgets_is_preview();
-  
+  if (!$is_preview) {
+    $set_altered = FALSE;
+    drupal_alter('theme_widgets_set_view', $variables);
+  }
+  $set = $variables['set'];
+
   $cid = FALSE;
   $process_tokens = TRUE;
   $token_data = array(
@@ -1096,42 +1088,32 @@ function theme_widgets_set_view($variables) {
     }
   }
 
-  $is_preview = widgets_is_preview();
   if (!$is_preview && isset($set['data']['cache']['scope']) && ($cid = widgets_build_cache_cid($set['name'], $set['data']['cache']['scope'], $token_data))) {
     $cache = cache_get($cid, 'cache_widgets');
     if ($cache) {
-//dsm('cache_returned = ' . $cid);
-//dsm($cache);
       return $cache->data['output'];
     }
   }
   
-//dsm($set);  
   $style = isset($set['data']['style']) ? $set['data']['style'] : '';
-  
+
   $output = '';
   $set_pre = '';
   $set_post = '';
   $set_pre_elements = array();
   $set_post_elements = array();
   $count = 0;
+
   if (is_array($set['elements']) && (count($set['elements']) > 0)) {
-    
     foreach ($set['elements'] AS $weight => $element) {
-      $template = $element['template'];
+      $template = isset($element['template']) ? $element['template'] : null;
       $data = isset($element['data']) ? $element['data'] : array();
       $token_data['widgets']['element'] = $element;
       // replace literal tokens found in template
       if ($process_tokens) {
         $template = widgets_token_replace($template, $token_data);
       }
-//          if ($element['name'] == 'socialmedia_socialmedia-linkedin-profile-button' || $element['name'] == 'socialmedia_socialmedia-googleplus-profile-button') {
-//        dsm($template);
-//      }
       $template = widgets_replace_fields($template, $data);
-//          if ($element['name'] == 'socialmedia_socialmedia-linkedin-profile-button' || $element['name'] == 'socialmedia_socialmedia-googleplus-profile-button') {
-//        dsm($template);
-//      }
       if (isset($element['view callback']) && $element['view callback']) {
         $template = call_user_func($element['view callback'], $element);
       }
@@ -1140,7 +1122,6 @@ function theme_widgets_set_view($variables) {
         $template = widgets_token_replace($template, $token_data);
       }
       // if error with tokens, skip widget
-//dsm($element['name']);
       if (widgets_get_error($element['name']) && !widgets_is_preview()) {
         continue;
       }
@@ -1193,8 +1174,8 @@ function theme_widgets_set_view($variables) {
   if (!$count) {
     return '';
   }
-  //$set_pre = token_replace($set_pre, $token_data);
- // $set_post = token_replace($set_post, $token_data);
+  // $set_pre = token_replace($set_pre, $token_data);
+  // $set_post = token_replace($set_post, $token_data);
   
   $pre = '';
   $post = '';
@@ -1219,7 +1200,6 @@ function theme_widgets_set_view($variables) {
   
   if (!$is_preview && $cid) {
     cache_set($cid, $data, 'cache_widgets');
-    //dsm('cache_set = ' . $cid); 
   }  
   
   return $output;
@@ -1227,7 +1207,6 @@ function theme_widgets_set_view($variables) {
 
 function widgets_token_replace($template, $token_data) {
   $template = token_replace($template, $token_data);
-//dsm($token_data);  
   // check if any special operators
   if (strpos($template, '[|') === FALSE) {
     return $template;
@@ -1235,7 +1214,6 @@ function widgets_token_replace($template, $token_data) {
 
   $pattern = '/\[\|(.*?)\|\]/';
   preg_match_all($pattern, $template, $matches);
-//dsm($matches);
   if (isset($matches[1])) {
     $i = 0;
     foreach ($matches[1] AS $match) {
@@ -1243,15 +1221,12 @@ function widgets_token_replace($template, $token_data) {
       $value = '';
       foreach ($elements AS $element) {
         $results = token_scan($element);
-//dsm($element);
-//dsm($results);
         if (count($results) == 0) {
           $value = $element;
           break;
         }
 
       }
-//dsm($matches[0][$i] . ", $value");
       $template = str_replace($matches[0][$i], $value, $template);
       $i++;
     }
@@ -1266,10 +1241,9 @@ function widgets_token_replace($template, $token_data) {
  * @param array $context - follows format for token_replace $data
  */
 function widgets_build_cache_cid($name, $scope = '', $context = array()) {
-  //$cache_scope = widgets_build_cache_cid($name);
+  // $cache_scope = widgets_build_cache_cid($name);
   $cache = FALSE;
   $cid = 'set:' . $name;
-//dsm($scope);
   if ($scope == 'site') {
     $cache = TRUE;
   }
@@ -1350,7 +1324,6 @@ function theme_widgets_element_view($variables) {
 
 function widgets_replace_fields($template, $data) {
   $fields = widgets_field_scan($template);
-//dsm($fields);
   foreach ($fields AS $key => $field) {   
     $keys = explode(':', $key);
     if ( count($keys) == 1) {

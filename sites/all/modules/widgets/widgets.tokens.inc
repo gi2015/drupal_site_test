@@ -27,6 +27,10 @@ function widgets_token_info() {
     );
   }
   
+  if (!count($widget_sets)) {
+    return array();
+  }
+
   return array(
     'types' => array('widgets' => $type), 
     'tokens' => array(

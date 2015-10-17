@@ -34,7 +34,6 @@ function widgets_set_list() {
  * @see widgets_set_name_validate()
  */
 function widgets_set_form($form, &$form_state, $set) {
-//dsm($set);
   // if destination is set, save it in session so widget element add works correctly
   /*
   if ($_GET['destination']) {
@@ -76,6 +75,7 @@ function widgets_set_form($form, &$form_state, $set) {
       '#title' => t('Widget set name'),
       '#markup' => $set['name'],
       '#description' => t('This widget set is being provided by %module module and may not be renamed.', array('%module' => $set['module'])),
+      '#maxlength' => 30,
     );
   }
   else {
@@ -87,6 +87,7 @@ function widgets_set_form($form, &$form_state, $set) {
       '#description' => t('The name is used as the identifier for generating the widget set. Use only lowercase alphanumeric characters, underscores (_), and hyphens (-).'),
       '#element_validate' => array('widgets_set_name_validate'),
       '#required' => TRUE,
+      '#maxlength' => 30,
     );
   }
   
@@ -311,7 +312,6 @@ function widgets_set_form_data_fields($data, $set, $editable) {
     '#value' => $cid0,
   ); 
   
-//dsm($set);
   $vars = array(
     'set' => $set,
     'process_tokens' => FALSE,
@@ -444,6 +444,7 @@ function widgets_set_add_form($form, &$form_state) {
     '#description' => t('The name is used to identify the widget set in blocks, tokens and other displays. Use only lowercase alphanumeric characters, underscores (_), and hyphens (-).'),
     '#element_validate' => array('widgets_set_name_validate'),
     '#required' => TRUE,
+    '#maxlength' => 30,
   );
 
   $form['submit'] = array(
@@ -489,7 +490,7 @@ function widgets_set_name_validate($element, $form_state) {
  * @ingroup forms
  * @see widgets_set_delete_form_submit()
  */
-function widgets_set_delete_form($form, $form_state, $set) {
+function widgets_set_delete_form($form, &$form_state, $set) {
   $form_state['widgets_set'] = $set;
 
   $replacement_sets = array_diff_key(widgets_set_options(), array($set['name'] => ''));
@@ -523,7 +524,7 @@ function widgets_set_delete_form_submit($form, &$form_state) {
 /**
  * Confirmation form to revert a database set to its default.
  */
-function widgets_set_revert_form($form, $form_state, $set) {
+function widgets_set_revert_form($form, &$form_state, $set) {
   $form_state['widgets_set'] = $set;
 
   return confirm_form(
@@ -752,13 +753,11 @@ function widgets_element_scale_validate($element, &$form_state) {
  *   The current configuration for this resize element.
  */
 function widgets_template_auto_form($data, $element = NULL) {
-//dsm($data);  
 
   $form = array();
   if (!isset($element)) {
     $element = widgets_element_load_by_admin_path();
   }
-//dsm($element);
   if (isset($element['data']) && count($element['data'])) {
     $data = $element['data'];
   }
@@ -847,7 +846,7 @@ function widgets_definition_list() {
   $page['widgets_definition_list'] = array(
     '#markup' => theme('widgets_definition_list', array('definitions' => $definitions)),
     '#attached' => array(
-      'css' => array(drupal_get_path('module', 'widgets') . '/widgets.admin.css' => array(), array('attributes' => array('target' => '_blank'))),
+      'css' => array(drupal_get_path('module', 'widgets') . '/widgets.admin.css' => array('attributes' => array('target' => '_blank'))),
     ),
   );
 
@@ -995,12 +994,10 @@ function widgets_definition_edit_form_submit($form, &$form_state) {
     'label' => $values['name'],
     'template' => $values['template'],
   );
-//dsm($values);
   $values = $values['advanced'];
   if ($values['add_js']['data']) {
     $definition['add_js'] = $values['add_js'];
   }
-//dsm($definition);
   
   // check to see if variable fields are in the template, if so, set form callback to auto form
   $fields = widgets_template_auto_form(array(), $definition);
@@ -1019,13 +1016,10 @@ function widgets_definition_preview_form($form, &$form_state, $definition) {
     $definition['data'] = $_SESSION['widgets']['preview_form_data'];
     //unset($_SESSION['widgets']['preview_form_data']);
   }
-//dsm($form_state);
-//dsm($definition);
   
   $set = array(
     'name' => 'preview',
   );
-//dsm($definition);  
   // Show the thumbnail preview.
   $form['#tree'] = TRUE;
   $preview = theme('widgets_element_view', array('element' => $definition));
@@ -1063,8 +1057,6 @@ function widgets_definition_preview_form($form, &$form_state, $definition) {
   if (isset($definition['form callback'])) {
     //$fields = call_user_func($definition['form callback'], $definition['data'], $definition);
     $fields = call_user_func($definition['form callback'], $definition['data']);
-//dsm($definition);
-//dsm($fields);
     drupal_alter('widgets_element_form', $fields, $set, $definition);
     $form['data'] = array_merge($form['data'], $fields);
     
