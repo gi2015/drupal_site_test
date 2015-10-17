@@ -1,0 +1,136 @@
+<?php
+
+function form_example_menu() {
+  $items = array();
+
+  
+$items['forms/form1'] = array( //this creates a URL that will call this form at "examples/form-example"
+    'title' => 'George Example Form', //page title
+    'description' => 'A form to mess around with.',
+    'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+    'page arguments' => array('form_example_form'), //put the name of the form here
+    'access callback' => TRUE
+  );
+
+  return 
+$items;
+}
+
+
+
+function form_example_form($form, &$form_state) {
+  
+ $form = array(
+);
+$form['sample_textfield'] = array(
+  '#size' => '20',
+  '#weight' => '0',
+  '#pre_render' => array(
+    '0' => 'ctools_dependent_pre_render',
+    '1' => 'form_builder_pre_render',
+  ),
+  '#field_suffix' => ' :Suffix',
+  '#field_prefix' => 'Prefix: ',
+  '#type' => 'textfield',
+  '#title' => t('Sample textfield'),
+  '#default_value' => 'a sample value',
+);
+$form['sample_checkboxes'] = array(
+  '#multiple' => '1',
+  '#pre_render' => array(
+    '0' => 'form_pre_render_conditional_form_element',
+    '1' => 'ctools_dependent_pre_render',
+    '2' => 'form_builder_pre_render',
+  ),
+  '#weight' => '1',
+  '#default_value' => array(
+    '0' => 'two',
+  ),
+  '#type' => 'checkboxes',
+  '#title' => t('Sample checkboxes'),
+  '#options' => array(
+    'one' => t('one'),
+    'two' => t('two'),
+    'three' => t('three'),
+  ),
+);
+$form['new_1443605428578'] = array(
+  '#weight' => '2',
+  '#pre_render' => array(
+    '0' => 'form_builder_pre_render',
+  ),
+  '#type' => 'file',
+  '#size' => '30',
+  '#title' => t('New file'),
+);
+$form['sample_textarea'] = array(
+  '#pre_render' => array(
+    '0' => 'ctools_dependent_pre_render',
+    '1' => 'form_builder_pre_render',
+  ),
+  '#weight' => '3',
+  '#default_value' => 'Text area sample value',
+  '#type' => 'textarea',
+  '#title' => t('Sample textarea'),
+);
+$form['sample_radios'] = array(
+  '#weight' => '4',
+  '#pre_render' => array(
+    '0' => 'form_pre_render_conditional_form_element',
+    '1' => 'ctools_dependent_pre_render',
+    '2' => 'form_builder_pre_render',
+  ),
+  '#default_value' => 'two',
+  '#options' => array(
+    'one' => t('one'),
+    'two' => t('two'),
+    'three' => t('three'),
+  ),
+  '#type' => 'radios',
+  '#title' => t('Sample radios'),
+);
+$form['sample_select'] = array(
+  '#multiple_toggle' => '1',
+  '#pre_render' => array(
+    '0' => 'ctools_dependent_pre_render',
+    '1' => 'form_builder_pre_render',
+  ),
+  '#weight' => '5',
+  '#default_value' => 'two',
+  '#type' => 'select',
+  '#title' => t('Sample select'),
+  '#options' => array(
+    'one' => t('one'),
+    'two' => t('two'),
+    'three' => t('three'),
+  ),
+);
+
+// field with validation  , then add the check in the validation function
+ $form['price'] = array(
+    '#type' => 'textfield', //you can find a list of available types in the form api
+    '#title' => 'What is Your Price?',
+    '#size' => 10,
+    '#maxlength' => 10,
+    '#required' => TRUE, //make this field required 
+  );
+  
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Click Here!'),
+  );
+  
+return $form;
+}
+
+
+function form_example_form_validate($form, &$form_state) {
+	 if (!($form_state['values']['price'] > 0)){
+    form_set_error('price', t('Price must be a positive number.'));
+  }
+}
+
+function form_example_form_submit($form, &$form_state) {
+}
+
+
